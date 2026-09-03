@@ -1,0 +1,17 @@
+{
+  "name": "smart-meeting-reservation-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "智能会议预约管理系统 V1.0",
+  "workspaces": ["server", "web"],
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,green \"npm run dev -w server\" \"npm run dev -w web\"",
+    "build": "npm run build -w server && npm run build -w web",
+    "test": "npm run test -w server && npm run test -w web",
+    "db:init": "npm run db:init -w server",
+    "db:reset": "npm run db:reset -w server"
+  },
+  "devDependencies": {
+    "concurrently": "9.2.4"
+  }
+}

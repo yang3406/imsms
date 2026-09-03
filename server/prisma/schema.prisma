@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  APPROVE
+  REJECT
+  CANCEL
+  CHECK_IN
+  START
+  COMPLETE
+  LOGIN
+}
+
+model Department {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  username     String       @unique
+  passwordHash String
+  name         String
+  email        String       @unique
+  role         Role         @default(EMPLOYEE)
+  active       Boolean      @default(true)
+  departmentId Int?
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  bookings     Booking[]    @relation("BookingCreator")
+  approvals    Booking[]    @relation("BookingApprover")
+  audits       AuditLog[]
+  notifications Notification[]
+  templates     MeetingTemplate[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Room {
+  id          Int                 @id @default(autoincrement())
+  name        String              @unique
+  location    String
+  capacity    Int
+  equipment   String
+  openTime    String              @default("08:00")
+  closeTime   String              @default("20:00")
+  description String              @default("")
+  active      Boolean             @default(true)
+  bookings    Booking[]
+  maintenance MaintenanceWindow[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model MaintenanceWindow {
+  id        Int      @id @default(autoincrement())
+  roomId    Int
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  startTime DateTime
+  endTime   DateTime
+  reason    String
+  createdAt DateTime @default(now())
+}
+
+model BookingRule {
+  id               Int      @id @default(1)
+  minAdvanceMinutes Int     @default(0)
+  maxDurationMinutes Int    @default(480)
+  checkInEarlyMinutes Int   @default(15)
+  noShowMinutes     Int      @default(30)
+  updatedAt         DateTime @updatedAt
+}
+
+model Booking {
+  id              Int           @id @default(autoincrement())
+  code            String        @unique
+  seriesCode      String?
+  title           String
+  description     String        @default("")
+  roomId          Int
+  room            Room          @relation(fields: [roomId], references: [id])
+  creatorId       Int
+  creator         User          @relation("BookingCreator", fields: [creatorId], references: [id])
+  attendeeNames   String
+  attendeeCount   Int
+  startTime       DateTime
+  endTime         DateTime
+  status          BookingStatus @default(PENDING)
+  approverId      Int?
+  approver        User?         @relation("BookingApprover", fields: [approverId], references: [id])
+  approvalComment String?
+  approvedAt      DateTime?
+  checkedInAt     DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  audits          AuditLog[]
+}
+
+model MeetingTemplate {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  title         String
+  description   String   @default("")
+  attendeeNames String
+  attendeeCount Int
+  equipment     String   @default("")
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, name])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  user       User        @relation(fields: [userId], references: [id])
+  bookingId  Int?
+  booking    Booking?    @relation(fields: [bookingId], references: [id])
+  action     AuditAction
+  entityType String
+  entityId   String
+  detail     String
+  createdAt  DateTime    @default(now())
+}

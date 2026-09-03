@@ -1,0 +1,5 @@
+export type Role = 'ADMIN' | 'EMPLOYEE';
+export type BookingStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CHECKED_IN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+export interface User { id: number; username: string; name: string; email: string; role: Role; department: string }
+export interface Room { id: number; name: string; location: string; capacity: number; equipment: string; openTime: string; closeTime: string; description: string; active: boolean; score?: number; reason?: string; maintenance?: Array<{ id: number; startTime: string; endTime: string; reason: string }> }
+export interface Booking { id: number; code: string; title: string; description: string; roomId: number; room: Room; creatorId: number; creator: { id: number; name: string; department?: { name: string } }; attendeeNames: string; attendeeCount: number; startTime: string; endTime: string; status: BookingStatus; approvalComment?: string; approver?: { name: string }; createdAt: string; audits?: Array<{ id: number; action: string; detail: string; createdAt: string; user: { name: string } }> }
